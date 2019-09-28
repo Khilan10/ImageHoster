@@ -156,12 +156,33 @@ public class ImageController {
 
 
     //This controller method is called when the request pattern is of type 'deleteImage' and also the incoming request is of DELETE type
+    //firstly the user data about logged in user and user who upload the image
+    //if the both the user are same than the image is deleted
+    // else the user is shown an error message
     //The method calls the deleteImage() method in the business logic passing the id of the image to be deleted
     //Looks for a controller method with request mapping of type '/images'
     @RequestMapping(value = "/deleteImage", method = RequestMethod.DELETE)
-    public String deleteImageSubmit(@RequestParam(name = "imageId") Integer imageId) {
+    public String deleteImageSubmit(@RequestParam(name = "imageId") Integer imageId,Model model,HttpSession session) {
+
+        //this will be used to get user details of the user who has logged in
+        User loggedUser = (User) session.getAttribute("loggeduser");
+        //this will be used to get the information of the user who has posted the image
+        Image image = imageService.getImage(imageId);
+        User imageUser = image.getUser();
+
+        //condition added such that if the loogged in user and the user who uploaded the image are same than
+        //the image will get edited otherwise message will be shown to user
+        if (imageUser.getId() == loggedUser.getId()) {
         imageService.deleteImage(imageId);
         return "redirect:/images";
+        }else{
+            //adding the error message that is shown to user if he/she tries to delete an image uploaded by other user
+            String error = "Only the owner of the image can delete the image";
+            model.addAttribute("image", image);
+            model.addAttribute("tags",image.getTags());
+            model.addAttribute("deleteError",error);
+            return "images/image";
+        }
     }
 
 
